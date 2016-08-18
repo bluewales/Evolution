@@ -229,7 +229,13 @@ turn NeuralNetwork::get_turn() {
 	}
 }
 
-void NeuralNetwork::register_output(OutputNode * node) {
+void NeuralNetwork::register_output(turn output) {
+
+	OutputNode * node = new OutputNode();
+	node->historic_mark = dude->field->get_historic_count();
+	node->output = output;
+	node->start_value = 0.5;
+
 	output_nodes = (NeuralNode **)realloc(output_nodes, (number_of_output_nodes+1) * sizeof(NeuralNode *));
 	output_nodes[number_of_output_nodes] = node;
 	number_of_output_nodes++;

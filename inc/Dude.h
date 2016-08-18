@@ -1,6 +1,8 @@
 #ifndef dude_h_
 #define dude_h_
 
+#include <openssl/sha.h>
+
 #include "Field.h"
 #include "direction.h"
 

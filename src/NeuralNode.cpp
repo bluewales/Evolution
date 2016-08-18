@@ -22,3 +22,8 @@ NeuralNode * create_node(node_type type, Dude * dude) {
 		
 	}
 }
+
+
+NeuralNode:: ~NeuralNode() {
+
+}

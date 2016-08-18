@@ -339,12 +339,11 @@ void Dude::act() {
 }
 
 void Dude::reproduce() {
-	unsigned int mutated = 0;
 	//printf("REPRODUCE\r\n");
 	
 	Dude * offspring = new Dude(field);
 
-	offspring->load_genome(genome_filename);;
+	offspring->load_genome(genome_filename);
 	
 	offspring->regular_energy_level = this->regular_energy_level/2;
 	this->regular_energy_level -= offspring->regular_energy_level;
@@ -359,9 +358,6 @@ void Dude::reproduce() {
 	field->add_dude(offspring, this->x, this->y);
 	
 	unsigned int r = SHR128() % mutation_chance;
-	if(r == 0) {
-		mutated = 1;
-	}
 	while(r == 0) {
 		r = (SHR128() % mutation_chance);
 		if(!offspring->mutate()) {

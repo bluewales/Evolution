@@ -13,6 +13,8 @@ class Reader {
 	~Reader();
 	
 	void read(unsigned char * buffer, unsigned int n);
+
+	void readfile(unsigned char * buffer);
 	void write(unsigned char * buffer, unsigned int n);
 
 };

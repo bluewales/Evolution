@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <openssl/sha.h>
 
 #include "Field.h"
 #include "Reader.h"
@@ -62,86 +63,6 @@ void Field::advance_state() {
 	delete r;
 };
 
-void Field::load() {
-	
-	Reader * r = new Reader((char *)filename, (char *)"r");
-	
-	unsigned int n_i;
-	unsigned char n_buf[4];
-	
-	// load field size
-	n_i = 0;
-	r->read(n_buf, 4);
-	buffer_to_int(n_buf, &width, &n_i);
-	n_i = 0;
-	r->read(n_buf, 4);
-	buffer_to_int(n_buf, &height, &n_i);
-	n_i = 0;
-	r->read(n_buf, 4);
-	buffer_to_int(n_buf, &historic_count, &n_i);
-	n_i = 0;
-	r->read(n_buf, 4);
-	buffer_to_int(n_buf, &day, &n_i);
-	
-	width = 256;
-	height = 256;
-	
-	// load vegatation
-	unsigned int index = 0;
-	unsigned int i, j;
-	unsigned char * buffer = (unsigned char *)malloc(width * height);
-	
-	create_empty_field();
-	
-	r->read(buffer, width * height);
-
-	for(i = 0; i < width; i++) {
-		for(j = 0; j < height; j++) {
-			vegatation[i][j] = buffer[index++];
-		}
-	}
-	
-	// load dudes
-	n_i = 0;
-	r->read(n_buf, 4);
-	buffer_to_int(n_buf, &dude_population, &n_i);
-	
-	
-	printf("LOAD %d dudes\r\n", dude_population);
-	dudes = (Dude **)malloc(dude_population * sizeof(Dude *)) ;
-	
-	unsigned int stream_size = 0;
-	unsigned char * dude_stream = 0;
-	
-	for(i = 0; i < dude_population; i++) {
-		
-		unsigned int dude_length;
-		n_i = 0;
-		r->read(n_buf, 4);
-		buffer_to_int(n_buf, &dude_length, &n_i);
-		
-		if(dude_length > stream_size) {
-			dude_stream = (unsigned char *)realloc(dude_stream, dude_length);
-			stream_size = dude_length;
-		}
-		r->read(dude_stream, dude_length);
-		
-		dudes[i] = new Dude(this);
-		unsigned int read_length = 0;
-		dudes[i]->deserialize_state(dude_stream, &read_length);
-		location_of_dudes[dudes[i]->x][dudes[i]->y] = dudes[i];
-		if(read_length != dude_length) {
-			printf("ERROR: deserializing dude state in field %d,%d\r\n", dude_length, read_length);
-			exit(0);
-		}
-	}
-	
-	delete r;
-	free(buffer);
-	if(dude_stream) {
-		free(dude_stream);
-	}
-}
 
 void Field::create_empty_field() {
 	unsigned int i;
@@ -149,49 +70,81 @@ void Field::create_empty_field() {
 	location_of_dudes = (Dude ***)malloc(width * sizeof(Dude **));
 	for(i = 0; i < width; i++) {
 		vegatation[i] = (unsigned char *)malloc(height * sizeof(unsigned char));
+		memset(vegatation[i], 255, height * sizeof(Dude *));
+
 		location_of_dudes[i] = (Dude **)malloc(height * sizeof(Dude *));
 		memset(location_of_dudes[i], 0, height * sizeof(Dude *));
 	}
 }
 
+void Field::load() {
+	
+	Reader * r = new Reader((char *)filename, (char *)"r");
+	
+	unsigned int index = 0;
+	unsigned char * buffer = (unsigned char *)malloc(r->filesize());
+
+	r->readfile(buffer);
+	
+	// load field size
+	
+	buffer_to_int(buffer, &width, &index);
+	buffer_to_int(buffer, &height, &index);
+	buffer_to_int(buffer, &historic_count, &index);
+	buffer_to_int(buffer, &day, &index);
+	
+	
+	// load vegatation
+	unsigned int i, j;
+	
+	create_empty_field();
+	
+	for(i = 0; i < width; i++) {
+		for(j = 0; j < height; j++) {
+			buffer_to_char(buffer, &vegatation[i][j], index);
+		}
+	}
+	
+	// load dudes
+	buffer_to_int(buffer, &dude_population, &index);
+	
+	
+	printf("LOAD %d dudes\r\n", dude_population);
+	dudes = (Dude **)malloc(dude_population * sizeof(Dude *)) ;
+	
+	
+	for(i = 0; i < dude_population; i++) {
+		
+		dudes[i] = new Dude(this);
+		unsigned int read_length = 0;
+		dudes[i]->deserialize_state(buffer, &index);
+		location_of_dudes[dudes[i]->x][dudes[i]->y] = dudes[i];
+	}
+	
+	delete r;
+	free(buffer);
+}
+
+
 void Field::save() {
 
-	unsigned int index = 0;
-	Reader * r = new Reader(filename, (char *)"w");
-	
 	// save area size
-	unsigned char n_buf[4];
-	int_to_buffer(&width, n_buf);
-	
-	r->write(n_buf, 4);
-	
-	int_to_buffer(&height, n_buf);
-	r->write(n_buf, 4);
-	
-	int_to_buffer(&historic_count, n_buf);
-	r->write(n_buf, 4);
-	
-	int_to_buffer(&day, n_buf);
-	r->write(n_buf, 4);
-	
-	// save vegatation
-	unsigned char * buffer = (unsigned char *)malloc(width * height);
+	unsigned char * stream = 0;
+	unsigned int length = 0;
+
+	stream = add_int_to_stream(stream, &length, &width);
+	stream = add_int_to_stream(stream, &length, &height);
+	stream = add_int_to_stream(stream, &length, &historic_count);
+	stream = add_int_to_stream(stream, &length, &day);
 	
 	unsigned int i, j;
 	for(i = 0; i < width; i++) {
 		for(j = 0; j < height; j++) {
-			buffer[index++] = vegatation[i][j];
-		}
-	}
-	r->write(buffer, width * height);
-	
-	unsigned int live_count = dude_population;
-	for(i = 0; i < dude_population; i++) {
-		if(dudes[i]->dead) {
-			live_count--;
+			stream = add_char_to_stream(stream, &length, &vegatation[i][j]);
 		}
 	}
 	
+	/*
 	// save genomes
 	hashMap * genomes = hmcreate();
 	unsigned int genome_length = 0;
@@ -211,7 +164,7 @@ void Field::save() {
 		}
 		
 		unsigned char hash[SHA_DIGEST_LENGTH];
-		unsigned char filename[SHA_DIGEST_LENGTH*2+1];
+		char filename[SHA_DIGEST_LENGTH*2+1];
 		
 		SHA1(genome, genome_length, hash);
 		
@@ -229,20 +182,19 @@ void Field::save() {
 	
 	for(i = 0; i < genomes->size; i++) {
 		if(genomes->map[i].key) {
-			unsigned char * filename = genomes->map[i].key;
-			unsigned char * genome = hmget(genomes, filename);
-			r->write(filename, SHA_DIGEST_LENGTH*2);
+			char * filename = genomes->map[i].key;
+			unsigned char * genome = (unsigned char *)hmget(genomes, filename);
+			r->write((unsigned char *)filename, SHA_DIGEST_LENGTH*2);
 			r->write(genome, genome_length);
 			free(genome);
 		}
 	}
 	hmdestroy(genomes);
+	*/
 	
 	
-	// save dudes
-	int_to_buffer(&live_count, n_buf);
-	r->write(n_buf, 4);
-	
+	stream = add_int_to_stream(stream, &length, &live_count);
+
 	printf("SAVE %d dudes\r\n", live_count);
 	
 	for(i = 0; i < dude_population; i++) {
@@ -250,16 +202,15 @@ void Field::save() {
 			continue;
 		}
 			
-		unsigned int dude_length = 0;
-		buffer = dudes[i]->serialize_state(buffer, &dude_length);
+		stream = dudes[i]->serialize_state(stream, &length);
 		
-		int_to_buffer(&dude_length, n_buf);
-		r->write(n_buf, 4);
-		r->write(buffer, dude_length);
+		
 	}
-	
+
+	Reader * r = new Reader(filename, (char *)"w");
+	r->write(stream, length);
 	delete r;
-	free(buffer);
+	free(stream);
 
 }
 

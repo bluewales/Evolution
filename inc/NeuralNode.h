@@ -21,6 +21,8 @@ class NeuralNode {
 	
 	// dynamic data
 	unsigned int connected;
+
+	virtual ~NeuralNode();
 	
 	virtual void deserialize_genome(unsigned char * stream, unsigned int * index) = 0;
 	virtual unsigned char * serialize_genome(unsigned char * stream, unsigned int * length) = 0;

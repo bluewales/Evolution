@@ -32,7 +32,7 @@ class NeuralNetwork {
 	void deserialize_state(unsigned char * stream, unsigned int * index);
 	unsigned char * serialize_state(unsigned char * stream, unsigned int * length);
 	
-	void register_output(OutputNode * node);
+	void register_output(turn node);
 	turn get_turn();
 	
 	unsigned int mutate();

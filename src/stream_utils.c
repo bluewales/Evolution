@@ -21,7 +21,6 @@ void buffer_to_double(unsigned char * buffer, double * d, unsigned int * index) 
 	*index += sizeof(double);
 }
 
-
 void buffer_to_char(unsigned char * buffer, unsigned char * character, unsigned int * index) {
 	*character = buffer[*index];
 	*index += 1;

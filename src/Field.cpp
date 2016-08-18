@@ -193,6 +193,12 @@ void Field::save() {
 	*/
 	
 	
+	unsigned int live_count = dude_population;
+	for(i = 0; i < dude_population; i++) {
+		if(dudes[i]->dead) {
+			live_count--;
+		}
+	}
 	stream = add_int_to_stream(stream, &length, &live_count);
 
 	printf("SAVE %d dudes\r\n", live_count);

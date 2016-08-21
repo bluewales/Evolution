@@ -206,16 +206,6 @@ void hashlittle2(const void *key, unsigned int *pc, unsigned int *pb) {
 
 
 
-
-
-
-
-
-
-
-
-
-
 int insert(hashNode * map, int size, char * key, void * value) {
 	unsigned int hash;
 	unsigned int dhash;
@@ -284,8 +274,8 @@ void * hmget(hashMap * h, char * key) {
 	}
 	return h->map[index].value;
 }
-/*
 
+/*
 #define N 200000
 #define TESTS 100
 int main() {

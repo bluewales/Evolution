@@ -12,6 +12,8 @@ class Reader {
 	Reader(char * filename, char * mode);
 	~Reader();
 	
+	unsigned int filesize();
+	
 	void read(unsigned char * buffer, unsigned int n);
 
 	void readfile(unsigned char * buffer);

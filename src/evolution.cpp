@@ -15,14 +15,16 @@
 
 int main(int argc, char *argv[]) {
 	
-	unsigned int i,j;
+	unsigned int i;
 	
 	sfastRandom(time(0));
 
 	if(argc == 1) {
 		for(i = 0; i < 1000; i++)  {
 			Field * field = new Field((char *)"field/one.field");
+			printf("loaded\r\n");
 			field->advance_state();
+			printf("advanced\r\n");
 			delete field;
 		}
 	} else {
@@ -45,6 +47,8 @@ int main(int argc, char *argv[]) {
 			printf("Seed dude\r\n");
 			Dude * dude = new Dude(field);
 			dude->mutation_day = 0;
+			
+			
 			
 			memcpy(dude->parent_genome, "The first genome did not mutate from another genome", GENOME_FILENAME_LENGTH);
 			
@@ -95,10 +99,6 @@ int main(int argc, char *argv[]) {
 			dude->neural_network->register_output(RIGHT);
 			dude->neural_network->register_output(LEFT);
 			dude->neural_network->register_output(RANDOM_TURN);
-			
-			printf("save genome\r\n");
-			
-			dude->save_genome();
 			
 			delete field;
 		}

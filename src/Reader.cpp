@@ -17,8 +17,8 @@ Reader::~Reader() {
 
 unsigned int Reader::filesize() {
 	fseek(fd, 0, SEEK_END);
-	unsigned int n = fsize = ftell(fd);
-	fseek(f, 0, SEEK_SET);
+	unsigned int n = ftell(fd);
+	fseek(fd, 0, SEEK_SET);
 	return n;
 }
 	

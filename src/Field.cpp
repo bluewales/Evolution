@@ -70,8 +70,8 @@ void Field::create_empty_field() {
 	location_of_dudes = (Dude ***)malloc(width * sizeof(Dude **));
 	for(i = 0; i < width; i++) {
 		vegatation[i] = (unsigned char *)malloc(height * sizeof(unsigned char));
-		memset(vegatation[i], 255, height * sizeof(Dude *));
-
+		memset(vegatation[i], 255, height * sizeof(unsigned char));
+		
 		location_of_dudes[i] = (Dude **)malloc(height * sizeof(Dude *));
 		memset(location_of_dudes[i], 0, height * sizeof(Dude *));
 	}
@@ -101,7 +101,7 @@ void Field::load() {
 	
 	for(i = 0; i < width; i++) {
 		for(j = 0; j < height; j++) {
-			buffer_to_char(buffer, &vegatation[i][j], index);
+			buffer_to_char(buffer, &vegatation[i][j], &index);
 		}
 	}
 	
@@ -116,7 +116,6 @@ void Field::load() {
 	for(i = 0; i < dude_population; i++) {
 		
 		dudes[i] = new Dude(this);
-		unsigned int read_length = 0;
 		dudes[i]->deserialize_state(buffer, &index);
 		location_of_dudes[dudes[i]->x][dudes[i]->y] = dudes[i];
 	}
@@ -140,7 +139,7 @@ void Field::save() {
 	unsigned int i, j;
 	for(i = 0; i < width; i++) {
 		for(j = 0; j < height; j++) {
-			stream = add_char_to_stream(stream, &length, &vegatation[i][j]);
+			stream = add_char_to_stream(stream, &length, vegatation[i][j]);
 		}
 	}
 	

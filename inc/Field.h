@@ -3,6 +3,7 @@
 
 #include "Dude.h"
 #include "direction.h"
+#include "hashMap.h"
 
 #define AREA_WIDTH 256
 

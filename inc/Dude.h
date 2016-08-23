@@ -5,6 +5,7 @@
 
 #include "Field.h"
 #include "direction.h"
+#include "hashMap.h"
 
 #define INTERNALLY_TRADED_ATTRIBUTES 5
 #define GENOME_FILENAME_LENGTH	SHA_DIGEST_LENGTH*2
@@ -24,8 +25,8 @@ class Dude {
 	direction orientation;
 	unsigned int dead;
 	
-	char genome_filename[GENOME_FILENAME_LENGTH];
-	char parent_genome[GENOME_FILENAME_LENGTH];
+	char genome_hash[SHA_DIGEST_LENGTH];
+	char parent_genome_hash[SHA_DIGEST_LENGTH];
 	unsigned int mutation_day;
 	
 	unsigned char internally_traded_attribute_buffer[(INTERNALLY_TRADED_ATTRIBUTES * (INTERNALLY_TRADED_ATTRIBUTES-1)) / 2];
@@ -60,7 +61,7 @@ class Dude {
 	void parse_attribute_stream();
 	void deserialize_genome(unsigned char * stream, unsigned int * length);
 	unsigned char * serialize_genome(unsigned char * stream, unsigned int * length);
-	void deserialize_state(unsigned char * stream, unsigned int * length);
+	void deserialize_state(unsigned char * stream, unsigned int * length, hashMap * genomes);
 	unsigned char * serialize_state(unsigned char * stream, unsigned int * length);
 	
 	void eat(unsigned int energy);

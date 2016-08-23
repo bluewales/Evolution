@@ -104,6 +104,34 @@ void Field::load() {
 			buffer_to_char(buffer, &vegatation[i][j], &index);
 		}
 	}
+
+	unsigned int genome_count = 0;
+	buffer_to_int(buffer, &genome_count, &index);
+
+	hashMap * genomes = hmcreate();
+	unsigned char * genome_blob = 0;
+	unsigned int genome_blob_length = 0;
+
+	for(i = 0; i < genome_count; i++) {
+
+		unsigned char hash[SHA_DIGEST_LENGTH];
+		unsigned int genome_length = 0;
+		unsigned int genome_buffer_length = 0;
+
+		copy_buffer(buffer, hash, SHA_DIGEST_LENGTH, &index);
+		buffer_to_int(buffer, &genome_length, &index);
+
+		if(genome_length > genome_buffer_length) {
+			genome_blob = realloc(genome_blob, (genome_blob_length+genome_length) * sizeof(char));
+		}
+
+		copy_buffer(buffer, &genome_blob[genome_blob_length], genome_length, &index);
+
+		hmset(genomes, hash, &genome_blob[genome_blob_length]);
+		genome_blob_length += genome_length;
+	}
+
+
 	
 	// load dudes
 	buffer_to_int(buffer, &dude_population, &index);
@@ -116,7 +144,7 @@ void Field::load() {
 	for(i = 0; i < dude_population; i++) {
 		
 		dudes[i] = new Dude(this);
-		dudes[i]->deserialize_state(buffer, &index);
+		dudes[i]->deserialize_state(buffer, &index, genomes);
 		location_of_dudes[dudes[i]->x][dudes[i]->y] = dudes[i];
 	}
 	
@@ -143,10 +171,14 @@ void Field::save() {
 		}
 	}
 	
-	/*
+	
 	// save genomes
-	hashMap * genomes = hmcreate();
+	unsigned int genome_count = 0;
+	char ** hashes = 0;
+	char ** genomes = 0;
+
 	unsigned int genome_length = 0;
+
 	for(i = 0; i < dude_population; i++) {
 		if(dudes[i]->dead) {
 			continue;
@@ -163,34 +195,51 @@ void Field::save() {
 		}
 		
 		unsigned char hash[SHA_DIGEST_LENGTH];
-		char filename[SHA_DIGEST_LENGTH*2+1];
 		
 		SHA1(genome, genome_length, hash);
+
+		unsigned int already_logged = 0;
+		for(j = 0; j < genome_count; j++) {
+			if(!memcmp(hash[j], hash, SHA_DIGEST_LENGTH)) {
+				already_logged = 1;
+				break;
+			}
+		}
+
+		if(already_logged) {
+			continue;
+		}
+
+		unsigned int this_index = genome_count;
+		genome_count += 1;
+
+		hashes = realloc(hashes, genome_count*sizeof(unsigned char *));
+		genomes = realloc(genomes, genome_count*sizeof(unsigned char *));
+
+		hashes[this_index] = (unsigned char *)malloc(SHA_DIGEST_LENGTH*sizeof(unsigned char));
+		genomes[this_index] = (unsigned char *)malloc(genome_length*sizeof(unsigned char));
+
+		memcpy(hashes[this_index], hash, SHA_DIGEST_LENGTH);
+		memcpy(genomes[this_index], genome, genome_length);
+	}
+	stream = add_int_to_stream(stream, &length, &genome_count);
+	
+	for(i = 0; i < genome_count; i++) {
+
+		stream = add_buffer_to_stream(stream, &length, hashes[i], SHA_DIGEST_LENGTH);
+		stream = add_int_to_stream(stream, &length, &genome_length);
+		stream = add_buffer_to_stream(stream, &length, genome[i], genome_length);
+
+		free(genomes[i]);
+		free(hashes[i]);
 		
-		for(j = 0; j < SHA_DIGEST_LENGTH; j++) {
-			sprintf(&filename[j*2], "%02X", hash[j]);
-		}
-		if(hmget(genomes, filename)) {
-			free(genome);	
-		} else {
-			hmset(genomes, filename, genome);
-		}
 	}
-	int_to_buffer(&genomes->count, n_buf);
-	r->write(n_buf, 4);
-	
-	for(i = 0; i < genomes->size; i++) {
-		if(genomes->map[i].key) {
-			char * filename = genomes->map[i].key;
-			unsigned char * genome = (unsigned char *)hmget(genomes, filename);
-			r->write((unsigned char *)filename, SHA_DIGEST_LENGTH*2);
-			r->write(genome, genome_length);
-			free(genome);
-		}
-	}
-	hmdestroy(genomes);
-	*/
-	
+
+	free(genomes);
+	free(hashes);
+
+
+
 	
 	unsigned int live_count = dude_population;
 	for(i = 0; i < dude_population; i++) {

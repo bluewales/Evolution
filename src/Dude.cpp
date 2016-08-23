@@ -222,7 +222,7 @@ void Dude::deserialize_genome(unsigned char * stream, unsigned int * index) {
 unsigned char * Dude::serialize_state(unsigned char * stream, unsigned int * length) {
 	
 	//save_genome();
-	stream = add_buffer_to_stream(stream, length, (unsigned char *)genome_filename, GENOME_FILENAME_LENGTH);
+	stream = add_buffer_to_stream(stream, length, (unsigned char *)genome_hash, SHA_DIGEST_LENGTH);
 	
 	stream = add_int_to_stream(stream, length, &x);
 	stream = add_int_to_stream(stream, length, &y);
@@ -238,9 +238,9 @@ unsigned char * Dude::serialize_state(unsigned char * stream, unsigned int * len
 	return stream;
 }
 
-void Dude::deserialize_state(unsigned char * stream, unsigned int * index) {
+void Dude::deserialize_state(unsigned char * stream, unsigned int * index, hashMap * genomes) {
 	
-	copy_buffer(stream, (unsigned char *)genome_filename, GENOME_FILENAME_LENGTH, index);
+	copy_buffer(stream, (unsigned char *)genome_hash, SHA_DIGEST_LENGTH, index);
 	
 	load_genome(genome_filename);
 	

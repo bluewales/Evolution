@@ -129,10 +129,11 @@ void NeuralNetwork::to_string(char * string) {
 
 
 unsigned char * NeuralNetwork::serialize_genome(unsigned char * stream, unsigned int * length) {
-	
+
 	unsigned int i = 0;
 	
 	stream = add_int_to_stream(stream, length, &number_of_nodes);
+
 	for(i = 0; i < number_of_nodes; i++) {
 		
 		unsigned int neural_node_type = (unsigned int)neural_nodes[i]->get_node_type();
@@ -141,6 +142,7 @@ unsigned char * NeuralNetwork::serialize_genome(unsigned char * stream, unsigned
 		stream = neural_nodes[i]->serialize_genome(stream, length);
 	}
 	stream = add_int_to_stream(stream, length, &number_of_links); 
+
 	for(i = 0; i < number_of_links; i++) {
 		stream = neural_links[i]->serialize_genome(stream, length);
 	}
@@ -153,8 +155,9 @@ unsigned char * NeuralNetwork::serialize_genome(unsigned char * stream, unsigned
 void NeuralNetwork::deserialize_genome(unsigned char * stream, unsigned int * index) {
 	
 	unsigned int i, j;
-	
+
 	buffer_to_int(stream, &number_of_nodes, index);
+	//printf("NeuralNetwork::deserialize_genome number_of_nodes %d %d\r\n", number_of_nodes, *index);
 	neural_nodes = (NeuralNode **)malloc(number_of_nodes * sizeof(NeuralNode *));
 	for(i = 0; i < number_of_nodes; i++) {
 		unsigned int neural_node_type;
@@ -171,7 +174,9 @@ void NeuralNetwork::deserialize_genome(unsigned char * stream, unsigned int * in
 			number_of_output_nodes++;
 		}
 	}
+
 	buffer_to_int(stream, &number_of_links, index);
+	//printf("NeuralNetwork::deserialize_genome number_of_links %d %d\r\n", number_of_links, *index);
 	neural_links = (NeuralLink **)malloc(number_of_links * sizeof(NeuralLink *));
 	for(i = 0; i < number_of_links; i++) {
 		

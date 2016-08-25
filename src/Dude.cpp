@@ -34,7 +34,6 @@ Dude::Dude(Field * field) {
 	other_attribute_mutation_chance = 128;
 	neaural_network_mutation_chance = 128;
 	orientation = random_direction();
-	genome_filename[0] = 0;
 	
 	neural_network = new NeuralNetwork(this);
 	
@@ -42,6 +41,35 @@ Dude::Dude(Field * field) {
 
 Dude::~Dude() {
 	delete neural_network;
+}
+
+void Dude::to_string(char * string) {
+	sprintf(string, (char*)"(% 4d,% 4d) e:% 4d/% 4d f:% 4d/% 4d r:% 4d/% 4d cost:(% 4d,% 4d) ratios(% 4d:% 4d:% 4d) mutation(% 4d:% 4d:% 4d:% 4d) %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+		x, y,
+		regular_energy_level, regular_energy_max,
+		fight_energy_level, fight_energy_max,
+		reproductive_energy_level, reproductive_energy_max,
+		live_cost,
+		move_cost,
+		regular_energy_ratio,
+		fight_energy_ratio,
+		reproductive_energy_ratio,
+		mutation_chance,
+		traded_attribute_mutation_chance,
+		other_attribute_mutation_chance,
+		neaural_network_mutation_chance,
+		internally_traded_attribute_buffer[0],
+		internally_traded_attribute_buffer[1],
+		internally_traded_attribute_buffer[2],
+		internally_traded_attribute_buffer[3],
+		internally_traded_attribute_buffer[4],
+		internally_traded_attribute_buffer[5],
+		internally_traded_attribute_buffer[6],
+		internally_traded_attribute_buffer[7],
+		internally_traded_attribute_buffer[8],
+		internally_traded_attribute_buffer[9]
+	);
+	neural_network->to_string(&string[strlen(string)]);
 }
 
 void Dude::save_genome() {
@@ -77,41 +105,12 @@ void Dude::save_genome() {
 	
 	free(genome);
 	delete r;
-	
-	strcpy(genome_filename, filename);
-}
-
-void Dude::to_string(char * string) {
-	sprintf(string, (char*)"(% 4d,% 4d) e:% 4d/% 4d f:% 4d/% 4d r:% 4d/% 4d cost:(% 4d,% 4d) ratios(% 4d:% 4d:% 4d) mutation(% 4d:% 4d:% 4d:% 4d) %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %s",
-		x, y,
-		regular_energy_level, regular_energy_max,
-		fight_energy_level, fight_energy_max,
-		reproductive_energy_level, reproductive_energy_max,
-		live_cost,
-		move_cost,
-		regular_energy_ratio,
-		fight_energy_ratio,
-		reproductive_energy_ratio,
-		mutation_chance,
-		traded_attribute_mutation_chance,
-		other_attribute_mutation_chance,
-		neaural_network_mutation_chance,
-		internally_traded_attribute_buffer[0],
-		internally_traded_attribute_buffer[1],
-		internally_traded_attribute_buffer[2],
-		internally_traded_attribute_buffer[3],
-		internally_traded_attribute_buffer[4],
-		internally_traded_attribute_buffer[5],
-		internally_traded_attribute_buffer[6],
-		internally_traded_attribute_buffer[7],
-		internally_traded_attribute_buffer[8],
-		internally_traded_attribute_buffer[9],
-		genome_filename
-	);
-	neural_network->to_string(&string[strlen(string)]);
 }
 
 void Dude::load_genome(char * filename) {
+
+	printf("Dude::load_genome can't load genome\n");
+	exit(0);
 	
 	Reader * r = new Reader(filename, (char *)"r");
 	
@@ -128,9 +127,6 @@ void Dude::load_genome(char * filename) {
 	r->read(genome, genome_length);
 	genome_length = 0;
 	deserialize_genome(genome, &genome_length);
-	
-	memcpy(genome_filename, filename, GENOME_FILENAME_LENGTH);
-	
 	free(genome);
 	delete r;
 }
@@ -170,13 +166,12 @@ void Dude::parse_attribute_stream() {
 unsigned char * Dude::serialize_genome(unsigned char * stream, unsigned int * length) {
 	*length = 0;
 	
-	stream = add_buffer_to_stream(stream, length, (unsigned char *)parent_genome, GENOME_FILENAME_LENGTH);
 	stream = add_int_to_stream(stream, length, &mutation_day);
 	
 	unsigned int attribute_stream_length = (INTERNALLY_TRADED_ATTRIBUTES * (INTERNALLY_TRADED_ATTRIBUTES-1)) / 2;
 	
 	stream = add_buffer_to_stream(stream, length, internally_traded_attribute_buffer, attribute_stream_length);
-	
+
 	stream = add_int_to_stream(stream, length, &regular_energy_ratio);
 	stream = add_int_to_stream(stream, length, &fight_energy_ratio);
 	stream = add_int_to_stream(stream, length, &reproductive_energy_ratio);
@@ -192,22 +187,22 @@ unsigned char * Dude::serialize_genome(unsigned char * stream, unsigned int * le
 }
 
 void Dude::deserialize_genome(unsigned char * stream, unsigned int * index) {
-	
-	copy_buffer(stream, (unsigned char *)parent_genome, GENOME_FILENAME_LENGTH, index);
+
+
 	buffer_to_int(stream, &mutation_day, index);
-	
+
 	unsigned int attribute_stream_length = (INTERNALLY_TRADED_ATTRIBUTES * (INTERNALLY_TRADED_ATTRIBUTES-1)) / 2;
 	
 	copy_buffer(stream, internally_traded_attribute_buffer, attribute_stream_length, index);
 	parse_attribute_stream();
-	
+
 	buffer_to_int(stream, &regular_energy_ratio, index);
 	buffer_to_int(stream, &fight_energy_ratio, index);
 	buffer_to_int(stream, &reproductive_energy_ratio, index);
 	buffer_to_int(stream, &mutation_chance, index);
 	buffer_to_int(stream, &traded_attribute_mutation_chance, index);
 	buffer_to_int(stream, &other_attribute_mutation_chance, index);
-	
+
 	//mutation_chance = 1024;
 	//traded_attribute_mutation_chance = 1024;
 	//other_attribute_mutation_chance = 1024;
@@ -221,7 +216,12 @@ void Dude::deserialize_genome(unsigned char * stream, unsigned int * index) {
 
 unsigned char * Dude::serialize_state(unsigned char * stream, unsigned int * length) {
 	
-	//save_genome();
+	unsigned int this_genome_length = 0;
+	unsigned char * genome = serialize_genome(0, &this_genome_length);
+	unsigned char genome_hash[SHA_DIGEST_LENGTH];
+	SHA1(genome, this_genome_length, genome_hash);
+	free(genome);
+
 	stream = add_buffer_to_stream(stream, length, (unsigned char *)genome_hash, SHA_DIGEST_LENGTH);
 	
 	stream = add_int_to_stream(stream, length, &x);
@@ -239,11 +239,21 @@ unsigned char * Dude::serialize_state(unsigned char * stream, unsigned int * len
 }
 
 void Dude::deserialize_state(unsigned char * stream, unsigned int * index, hashMap * genomes) {
-	
+
+	//printf("Dude::deserialize_state start %d\r\n", *index);
+
 	copy_buffer(stream, (unsigned char *)genome_hash, SHA_DIGEST_LENGTH, index);
-	
-	load_genome(genome_filename);
-	
+
+	unsigned char * genome = (unsigned char *)hmget(genomes, genome_hash);
+
+	if(!genome) {
+		printf("Dude::deserialize_state ERROR reding genome\n");
+		exit(0);
+	}
+
+	unsigned int temp_index = 0;
+	deserialize_genome(genome, &temp_index);
+
 	buffer_to_int(stream, &x, index);
 	buffer_to_int(stream, &y, index);
 	buffer_to_char(stream, (unsigned char*)&orientation, index);
@@ -253,7 +263,7 @@ void Dude::deserialize_state(unsigned char * stream, unsigned int * index, hashM
 	
 	neural_network->deserialize_state(stream, index);
 	
-	//printf("Dude::deserialize_state %d\r\n", *index);
+	//printf("Dude::deserialize_state end %d\r\n", *index);
 }
 
 void Dude::eat(unsigned int energy) {
@@ -325,7 +335,9 @@ void Dude::act() {
 		dead = true;
 		fight_energy_level = 0;
 		reproductive_energy_level = 0;
+		regular_energy_level = 0;
 		//printf("STARVE TO DEATH\r\n");
+		return;
 	}
 	
 	if(regular_energy_level > move_cost) {
@@ -343,7 +355,11 @@ void Dude::reproduce() {
 	
 	Dude * offspring = new Dude(field);
 
-	offspring->load_genome(genome_filename);
+	unsigned int this_genome_length = 0;
+	unsigned char * genome = serialize_genome(0, &this_genome_length);
+	unsigned int temp_index = 0;
+	offspring->deserialize_genome(genome, &temp_index);
+	free(genome);
 	
 	offspring->regular_energy_level = this->regular_energy_level/2;
 	this->regular_energy_level -= offspring->regular_energy_level;
@@ -363,11 +379,8 @@ void Dude::reproduce() {
 		if(!offspring->mutate()) {
 			r = 0;
 		}
+		offspring->mutation_day = field->day;
 	}
-	
-	memcpy(offspring->parent_genome, genome_filename, GENOME_FILENAME_LENGTH);
-	offspring->mutation_day = field->day;
-	
 }
 
 void Dude::bound_params() {

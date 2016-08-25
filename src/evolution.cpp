@@ -20,13 +20,15 @@ int main(int argc, char *argv[]) {
 	sfastRandom(time(0));
 
 	if(argc == 1) {
-		for(i = 0; i < 1000; i++)  {
-			Field * field = new Field((char *)"field/one.field");
-			printf("loaded\r\n");
+		Field * field = new Field((char *)"field/one.field");
+		printf("loaded\r\n");
+		for(i = 0; i < 100; i++)  {
+			
 			field->advance_state();
-			printf("advanced\r\n");
-			delete field;
+			printf("advanced %d\n\n", field->dude_population);
+			
 		}
+		delete field;
 	} else {
 		printf("%s\r\n", argv[1]);
 		if(!strcmp("reset",argv[1])) {
@@ -48,10 +50,6 @@ int main(int argc, char *argv[]) {
 			Dude * dude = new Dude(field);
 			dude->mutation_day = 0;
 			
-			
-			
-			memcpy(dude->parent_genome, "The first genome did not mutate from another genome", GENOME_FILENAME_LENGTH);
-			
 			unsigned char attribute_buffer[10];
 			
 			attribute_buffer[0] = 244;
@@ -70,7 +68,7 @@ int main(int argc, char *argv[]) {
 			
 			dude->regular_energy_level = dude->regular_energy_max;
 			dude->fight_energy_level = dude->fight_energy_max;
-			dude->reproductive_energy_level = 0;
+			dude->reproductive_energy_level = dude->reproductive_energy_max;
 	
 			dude->orientation = random_direction();
 			dude->dead = false;

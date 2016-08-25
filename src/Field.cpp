@@ -11,10 +11,17 @@
 
 Field::Field(char * filename) {
 	historic_count = 0;
+
+	dudes = 0;
+	vegatation = 0;
+	dude_population = 0;
+	location_of_dudes = 0;
+
 	if(filename) {
 		strcpy(this->filename, filename);
 		load();
 	}
+
 }
 
 Field::~Field() {
@@ -47,12 +54,14 @@ void Field::advance_state() {
 	}
 	char dude_string[4096];
 	for(i = 0; i < dude_population; i++) {
-		
+		if(dudes[i]->dead) {
+			continue;
+		}
 		
 		dudes[i]->act();
 		/*
 		dudes[i]->to_string(dude_string);
-		printf("% 5d: %s\r\n",i, dude_string);
+		printf("% 5d: %s\n\n",i, dude_string);
 		*/
 		
 	}
@@ -93,7 +102,6 @@ void Field::load() {
 	buffer_to_int(buffer, &historic_count, &index);
 	buffer_to_int(buffer, &day, &index);
 	
-	
 	// load vegatation
 	unsigned int i, j;
 	
@@ -109,26 +117,23 @@ void Field::load() {
 	buffer_to_int(buffer, &genome_count, &index);
 
 	hashMap * genomes = hmcreate();
-	unsigned char * genome_blob = 0;
-	unsigned int genome_blob_length = 0;
+	unsigned char ** genome_blob = (unsigned char **)malloc(genome_count * sizeof(char *));
+
+	printf("load %d genomes\n", genome_count);
 
 	for(i = 0; i < genome_count; i++) {
 
 		unsigned char hash[SHA_DIGEST_LENGTH];
 		unsigned int genome_length = 0;
-		unsigned int genome_buffer_length = 0;
 
 		copy_buffer(buffer, hash, SHA_DIGEST_LENGTH, &index);
 		buffer_to_int(buffer, &genome_length, &index);
+		
+		genome_blob[i] = (unsigned char *)malloc(genome_length * sizeof(char));
 
-		if(genome_length > genome_buffer_length) {
-			genome_blob = realloc(genome_blob, (genome_blob_length+genome_length) * sizeof(char));
-		}
+		copy_buffer(buffer, genome_blob[i], genome_length, &index);
 
-		copy_buffer(buffer, &genome_blob[genome_blob_length], genome_length, &index);
-
-		hmset(genomes, hash, &genome_blob[genome_blob_length]);
-		genome_blob_length += genome_length;
+		hmset(genomes, (char *)hash, (char *)genome_blob[i]);
 	}
 
 
@@ -150,10 +155,18 @@ void Field::load() {
 	
 	delete r;
 	free(buffer);
+
+	hmdestroy(genomes);
+	for(i = 0; i < genome_count; i++) {
+		free(genome_blob[i]);
+	}
+	free(genome_blob);
 }
 
 
 void Field::save() {
+
+	printf("Field::save\n");
 
 	// save area size
 	unsigned char * stream = 0;
@@ -171,13 +184,13 @@ void Field::save() {
 		}
 	}
 	
+
 	
 	// save genomes
 	unsigned int genome_count = 0;
 	char ** hashes = 0;
 	char ** genomes = 0;
-
-	unsigned int genome_length = 0;
+	unsigned int * genome_lengths = 0;
 
 	for(i = 0; i < dude_population; i++) {
 		if(dudes[i]->dead) {
@@ -187,20 +200,14 @@ void Field::save() {
 		unsigned int this_genome_length = 0;
 		unsigned char * genome = dudes[i]->serialize_genome(0, &this_genome_length);
 		
-		if(genome_length == this_genome_length || genome_length == 0) {
-			genome_length = this_genome_length;
-		} else {
-			printf("Field::save() Genome length error\r\n");
-			exit(0);
-		}
-		
 		unsigned char hash[SHA_DIGEST_LENGTH];
 		
-		SHA1(genome, genome_length, hash);
+		SHA1(genome, this_genome_length, hash);
+
 
 		unsigned int already_logged = 0;
 		for(j = 0; j < genome_count; j++) {
-			if(!memcmp(hash[j], hash, SHA_DIGEST_LENGTH)) {
+			if(!memcmp(hashes[j], hash, SHA_DIGEST_LENGTH)) {
 				already_logged = 1;
 				break;
 			}
@@ -213,22 +220,26 @@ void Field::save() {
 		unsigned int this_index = genome_count;
 		genome_count += 1;
 
-		hashes = realloc(hashes, genome_count*sizeof(unsigned char *));
-		genomes = realloc(genomes, genome_count*sizeof(unsigned char *));
+		hashes = (char **)realloc(hashes, genome_count*sizeof(char *));
+		genomes = (char **)realloc(genomes, genome_count*sizeof(char *));
+		genome_lengths = (unsigned int *)realloc(genome_lengths, genome_count*sizeof(char *));
 
-		hashes[this_index] = (unsigned char *)malloc(SHA_DIGEST_LENGTH*sizeof(unsigned char));
-		genomes[this_index] = (unsigned char *)malloc(genome_length*sizeof(unsigned char));
+		hashes[this_index] = (char *)malloc(SHA_DIGEST_LENGTH*sizeof(unsigned char));
+		genomes[this_index] = (char *)malloc(this_genome_length*sizeof(unsigned char));
+		genome_lengths[this_index] = this_genome_length;
 
 		memcpy(hashes[this_index], hash, SHA_DIGEST_LENGTH);
-		memcpy(genomes[this_index], genome, genome_length);
+		memcpy(genomes[this_index], genome, this_genome_length);
 	}
 	stream = add_int_to_stream(stream, &length, &genome_count);
 	
+	printf("save %d genomes\n", genome_count);
+
 	for(i = 0; i < genome_count; i++) {
 
-		stream = add_buffer_to_stream(stream, &length, hashes[i], SHA_DIGEST_LENGTH);
-		stream = add_int_to_stream(stream, &length, &genome_length);
-		stream = add_buffer_to_stream(stream, &length, genome[i], genome_length);
+		stream = add_buffer_to_stream(stream, &length, (unsigned char *)hashes[i], SHA_DIGEST_LENGTH);
+		stream = add_int_to_stream(stream, &length, &genome_lengths[i]);
+		stream = add_buffer_to_stream(stream, &length, (unsigned char *)genomes[i], genome_lengths[i]);
 
 		free(genomes[i]);
 		free(hashes[i]);
@@ -237,6 +248,7 @@ void Field::save() {
 
 	free(genomes);
 	free(hashes);
+	free(genome_lengths);
 
 
 
@@ -257,8 +269,6 @@ void Field::save() {
 		}
 			
 		stream = dudes[i]->serialize_state(stream, &length);
-		
-		
 	}
 
 	Reader * r = new Reader(filename, (char *)"w");
@@ -493,7 +503,7 @@ void Field::add_dude(Dude * new_dude, unsigned int x, unsigned int y) {
 					
 					new_dude->x = new_x;
 					new_dude->y = new_y;
-					
+
 					//char dude_string[512];
 					//new_dude->to_string(dude_string);
 					//printf("New dude: %s\r\n",dude_string);
@@ -503,7 +513,7 @@ void Field::add_dude(Dude * new_dude, unsigned int x, unsigned int y) {
 					dudes = (Dude **)realloc(dudes, (dude_population+1) * sizeof(Dude *));
 					dudes[dude_population] = new_dude;
 					dude_population++;
-					
+
 					return;
 				}
 			}

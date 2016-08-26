@@ -217,7 +217,7 @@ int insert(hashNode * map, int size, char * key, void * value) {
 			free(map[index].key);
 			map[index].key = key;
 			map[index].value = value;
-			printf("Same key! %s\n", key);
+			printf("Same key! '%s'\n", key);
 			return 0;
 		}
 		i++;

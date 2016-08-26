@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	if(argc == 1) {
 		Field * field = new Field((char *)"field/one.field");
 		printf("loaded\r\n");
-		for(i = 0; i < 100; i++)  {
+		for(i = 0; i < 1000; i++)  {
 			
 			field->advance_state();
 			printf("advanced %d\n\n", field->dude_population);
@@ -97,6 +97,8 @@ int main(int argc, char *argv[]) {
 			dude->neural_network->register_output(RIGHT);
 			dude->neural_network->register_output(LEFT);
 			dude->neural_network->register_output(RANDOM_TURN);
+
+			printf("Clean up\n");
 			
 			delete field;
 		}

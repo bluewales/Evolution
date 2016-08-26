@@ -57,3 +57,14 @@ unsigned char * add_double_to_stream(unsigned char * stream, unsigned int * leng
 	stream = add_buffer_to_stream(stream, length, n_buf, sizeof(double));
 	return stream;
 }
+
+char * hex_encode_buffer(unsigned char * buffer, unsigned int length) {
+	char * string = (char *)malloc(length * 2 + 1);
+
+	unsigned int i;
+	for(i = 0; i < length; i++) {
+		sprintf(&string[i*2], "%02X", buffer[i] & 0xFF);
+	}
+	string[length*2] = 0;
+	return string;
+}

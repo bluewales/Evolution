@@ -133,7 +133,9 @@ void Field::load() {
 
 		copy_buffer(buffer, genome_blob[i], genome_length, &index);
 
-		hmset(genomes, (char *)hash, (char *)genome_blob[i]);
+		char * hash_string =  hex_encode_buffer(hash, SHA_DIGEST_LENGTH);
+		hmset(genomes, hash_string, (char *)genome_blob[i]);
+		free(hash_string);
 	}
 
 

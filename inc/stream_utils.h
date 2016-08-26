@@ -9,3 +9,4 @@ unsigned char * add_char_to_stream(unsigned char * stream, unsigned int * length
 unsigned char * add_buffer_to_stream(unsigned char * stream, unsigned int * length, unsigned char * buffer, unsigned int buffer_length);
 unsigned char * add_int_to_stream(unsigned char * stream, unsigned int * length, unsigned int * i);
 unsigned char * add_double_to_stream(unsigned char * stream, unsigned int * length, double * d);
+char * hex_encode_buffer(unsigned char * buffer, unsigned int length);

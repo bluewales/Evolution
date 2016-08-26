@@ -25,8 +25,7 @@ class Dude {
 	direction orientation;
 	unsigned int dead;
 	
-	char genome_hash[SHA_DIGEST_LENGTH];
-	char parent_genome_hash[SHA_DIGEST_LENGTH];
+	unsigned char genome_hash[SHA_DIGEST_LENGTH];
 	unsigned int mutation_day;
 	
 	unsigned char internally_traded_attribute_buffer[(INTERNALLY_TRADED_ATTRIBUTES * (INTERNALLY_TRADED_ATTRIBUTES-1)) / 2];

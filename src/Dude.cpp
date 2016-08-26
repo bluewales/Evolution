@@ -218,7 +218,6 @@ unsigned char * Dude::serialize_state(unsigned char * stream, unsigned int * len
 	
 	unsigned int this_genome_length = 0;
 	unsigned char * genome = serialize_genome(0, &this_genome_length);
-	unsigned char genome_hash[SHA_DIGEST_LENGTH];
 	SHA1(genome, this_genome_length, genome_hash);
 	free(genome);
 
@@ -242,9 +241,11 @@ void Dude::deserialize_state(unsigned char * stream, unsigned int * index, hashM
 
 	//printf("Dude::deserialize_state start %d\r\n", *index);
 
-	copy_buffer(stream, (unsigned char *)genome_hash, SHA_DIGEST_LENGTH, index);
+	copy_buffer(stream, genome_hash, SHA_DIGEST_LENGTH, index);
 
-	unsigned char * genome = (unsigned char *)hmget(genomes, genome_hash);
+	char * hash_string =  hex_encode_buffer(genome_hash, SHA_DIGEST_LENGTH);
+	unsigned char * genome = (unsigned char *)hmget(genomes, hash_string);
+	free(hash_string);
 
 	if(!genome) {
 		printf("Dude::deserialize_state ERROR reding genome\n");

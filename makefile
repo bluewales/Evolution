@@ -9,23 +9,23 @@ LIBS = -lcrypto
 CC = g++ -Wall -g -O3 
 INCFLG = -Iinc $(LIBS)
 
-run : bin/evolution
-	./bin/evolution
+run : bin/evolution.exe
+	./bin/evolution.exe
 
 clean : 
 	rm $(OBJS) $(EX_OBJ)
-	rm bin/evolution
+	rm bin/evolution.exe
 	
-only : bin/evolution
+only : bin/evolution.exe
 
-reset : bin/evolution
-	./bin/evolution reset
+reset : bin/evolution.exe
+	./bin/evolution.exe reset
 	
 #####################################################################
 # executable files
 	
-bin/evolution : $(OBJS) $(EX_OBJ)
-	$(CC) -o bin/evolution $(OBJS) $(EX_OBJ) $(INCFLG)
+bin/evolution.exe : $(OBJS) $(EX_OBJ)
+	$(CC) -o bin/evolution.exe $(OBJS) $(EX_OBJ) $(INCFLG)
 	
 #####################################################################
 # executable objects files
